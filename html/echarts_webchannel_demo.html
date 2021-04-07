@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+    <meta charset="utf-8">
+    <script src="echarts.min.js"></script>
+    <script src="echarts-gl.min.js"></script>
+    <script src="qwebchannel.js"></script>
+</head>
+
+<body>
+    <div id="main" class="chart" style="width: 1500px;height:1500px;"></div>
+    <script type="text/javascript">
+        var resizeContainer = function () {
+            var myChart = document.getElementById('main');
+            myChart.style.width = window.innerWidth - 32 + 'px';
+            myChart.style.height = window.innerHeight - 100 + 'px';
+        };
+
+        resizeContainer();
+        var myChart = echarts.init(document.getElementById('main'));
+        
+        var option = {
+            title: {
+                text: 'qtwebengine echarts demo',
+                left: '40%'
+            },
+            grid: {
+                left: '5%',
+                right: '3%',
+                top: '10%',
+                bottom: '8%'
+            },
+            tooltip: {
+                trigger: 'axis'
+            },
+            legend: {
+                data: ['值'],
+                right: '10%',
+                top: '5%'
+            },
+            xAxis3D: {
+                type: 'value'
+            },
+            yAxis3D: {
+                type: 'value'
+            },
+            zAxis3D: {
+                type: 'value'
+            },
+            grid3D: {
+                viewControl: {
+                    projection: 'orthographic'
+                }
+            }
+        };
+        myChart.setOption(option);
+        window.onresize = function () {
+            resizeContainer();
+            myChart.resize();
+        };
+        
+        function get_point_style(rand) {
+            rand = rand % 7;
+            if(rand==0)
+                return 'circle';
+            if(rand==1)
+                return 'rect';
+            if(rand==2)
+                return 'roundRect';
+            if(rand==3)
+                return 'triangle';
+            if(rand==4)
+                return 'diamond';
+            if(rand==5)
+                return 'pin';
+            if(rand==6)
+                return 'arrow';
+        }
+
+        new QWebChannel(qt.webChannelTransport, function (channel) {
+            var webobj = channel.objects.webClass;
+            
+            webobj.dataChanged.connect(function (arg) {
+
+                series = [];
+                len = arg.line.length;
+                for(i=0;i<len;i++)
+                {
+                    item = {}
+                    item['type'] = 'line3D'
+                    item['data'] = arg.line[i]
+                    item['lineStyle'] = {}
+                    item['lineStyle']['width'] = 5
+                    item['lineStyle']['color'] = [1-i*1.0/len,1-Math.abs(0.5-i*1.0/len)*2,i*1.0/len,1]
+                    series.push(item)
+                }
+
+                for(i=0;i<len;i++)
+                {
+                    item = {}
+                    item['name'] = i+1
+                    item['type'] = 'scatter3D'
+                    item['data'] = arg.point[i]
+                    item['symbol'] = get_point_style(i)
+                    item['symbolSize'] = 20
+                    item['itemStyle'] = {}
+                    item['itemStyle']['color'] = [1-i*1.0/len,1-Math.abs(0.5-i*1.0/len)*2,i*1.0/len,1]
+                    series.push(item)
+                }
+
+                myChart.setOption({
+                    series: series
+                });
+            });
+
+        });
+    </script>
+</body>
+
+</html>
